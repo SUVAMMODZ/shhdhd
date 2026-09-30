@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Number Info API • Admin Panel</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+body{background:#f2f4f7;color:#222;line-height:1.5;font-size:14px;}
+a{text-decoration:none;color:inherit;}
+button{cursor:pointer;font-family:inherit;}
+
+/* LOGIN */
+.login-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{width:100%;max-width:400px;background:#fff;border:1px solid #ddd;border-radius:6px;padding:36px 32px;box-shadow:0 8px 24px rgba(0,0,0,.04);}
+.login-box .logo{width:52px;height:52px;background:#333;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:22px;margin:0 auto 16px;}
+.login-box h1{font-size:20px;font-weight:600;text-align:center;margin-bottom:6px;}
+.login-box p.sub{font-size:13px;color:#777;text-align:center;margin-bottom:26px;}
+.form-group{margin-bottom:14px;}
+.form-group label{display:block;font-size:13px;font-weight:500;color:#333;margin-bottom:5px;}
+.form-group input{width:100%;padding:10px 12px;background:#fff;border:1px solid #ccc;border-radius:4px;font-size:14px;}
+.form-group input:focus{outline:none;border-color:#555;}
+.login-btn{width:100%;padding:11px;background:#333;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-btn:hover{background:#111;}
+.error-msg{background:#fdecea;border:1px solid #f5c6c2;color:#c0392b;padding:10px 14px;border-radius:4px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.login-footer{text-align:center;font-size:12px;color:#999;margin-top:18px;}
+
+/* DASHBOARD */
+.dashboard-wrapper{display:none;min-height:100vh;}
+.dashboard-wrapper.active{display:block;}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:230px;background:#fff;border-right:1px solid #ddd;display:flex;flex-direction:column;z-index:1000;transition:transform .25s;}
+.sidebar .brand{padding:18px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px;}
+.sidebar .brand .icon{width:36px;height:36px;background:#333;color:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;}
+.sidebar .brand .text strong{font-size:14px;display:block;}
+.sidebar .brand .text small{font-size:11px;color:#888;}
+.sidebar nav{flex:1;padding:14px 10px;overflow-y:auto;}
+.sidebar nav .nav-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;padding:10px 10px 4px;font-weight:600;}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:4px;font-size:13px;color:#555;margin-bottom:2px;cursor:pointer;}
+.sidebar nav a i{width:16px;font-size:14px;text-align:center;}
+.sidebar nav a:hover{background:#f2f4f7;color:#222;}
+.sidebar nav a.active{background:#eef1f5;color:#222;font-weight:600;}
+.sidebar .foot{padding:14px 18px;border-top:1px solid #eee;font-size:11px;color:#999;}
+.menu-btn{display:none;position:fixed;top:12px;left:12px;z-index:1100;background:#fff;border:1px solid #ddd;border-radius:4px;width:38px;height:38px;font-size:16px;color:#333;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;}
+.overlay.active{display:block;}
+.main{margin-left:230px;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{background:#fff;border-bottom:1px solid #ddd;padding:0 26px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.topbar .crumb{font-size:12px;color:#888;}
+.topbar .crumb strong{color:#222;}
+.topbar .right{display:flex;align-items:center;gap:12px;}
+.topbar .secure{font-size:11px;color:#060;background:#eafaf0;border:1px solid #c8ebd6;padding:3px 10px;border-radius:12px;}
+.topbar .logout{font-size:12px;color:#555;border:1px solid #ddd;padding:5px 12px;border-radius:4px;background:#fff;cursor:pointer;}
+.topbar .logout:hover{background:#fdecea;border-color:#f5c6c2;color:#c0392b;}
+.content{padding:24px 26px 40px;flex:1;}
+.page-title{margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid #e6e6e6;}
+.page-title h1{font-size:22px;font-weight:600;}
+.page-title p{font-size:13px;color:#777;margin-top:2px;}
+.alert{padding:11px 16px;border-radius:4px;margin-bottom:18px;font-size:13px;display:flex;align-items:center;gap:8px;}
+.alert.success{background:#eafaf0;border:1px solid #c8ebd6;color:#0a7a3d;}
+.alert.error{background:#fdecea;border:1px solid #f5c6c2;color:#c0392b;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px;}
+.stat{background:#fff;border:1px solid #ddd;border-radius:5px;padding:16px 18px;display:flex;align-items:center;gap:14px;}
+.stat .ico{width:40px;height:40px;border-radius:5px;background:#eef1f5;color:#333;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.stat .num{font-size:22px;font-weight:700;line-height:1.1;}
+.stat .lbl{font-size:12px;color:#777;margin-top:2px;}
+.card{background:#fff;border:1px solid #ddd;border-radius:5px;padding:20px 22px;margin-bottom:22px;}
+.card-head{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid #eee;margin-bottom:18px;}
+.card-head .ico{width:32px;height:32px;border-radius:5px;background:#eef1f5;color:#333;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.card-head h3{font-size:15px;font-weight:600;}
+.card-head .sub{font-size:12px;color:#888;margin-left:auto;}
+.form-group label .req{color:#c0392b;}
+.form-group small{font-size:11px;color:#999;display:block;margin-top:3px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.service-fixed{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;background:#eef1f5;border:1px solid #ddd;border-radius:4px;font-size:12px;font-weight:600;margin-bottom:16px;}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border:none;border-radius:4px;font-size:13px;font-weight:500;}
+.btn-primary{background:#333;color:#fff;}
+.btn-primary:hover{background:#111;}
+.btn-secondary{background:#f2f4f7;color:#555;border:1px solid #ddd;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+table thead th{text-align:left;padding:9px 10px;font-size:10px;font-weight:600;color:#888;text-transform:uppercase;border-bottom:1px solid #ddd;background:#f2f4f7;}
+table tbody td{padding:9px 10px;border-bottom:1px solid #eee;vertical-align:middle;}
+table tbody tr:hover{background:#fafbfc;}
+table tbody td .key{font-weight:600;font-size:12px;font-family:monospace;}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-ok{background:#eafaf0;border:1px solid #c8ebd6;color:#0a7a3d;}
+.badge-bad{background:#fdecea;border:1px solid #f5c6c2;color:#c0392b;}
+.badge-info{background:#eaf2fb;border:1px solid #c7dcf4;color:#2358a0;}
+.badge-neutral{background:#f2f4f7;border:1px solid #ddd;color:#555;}
+.action-group{display:flex;gap:4px;flex-wrap:wrap;}
+.abtn{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border:none;border-radius:3px;font-size:11px;font-weight:500;}
+.abtn-edit{background:#eaf2fb;color:#2358a0;}
+.abtn-toggle{background:#fff7e6;color:#a86a00;}
+.abtn-del{background:#fdecea;color:#c0392b;}
+.endpoint{background:#2b2b2b;color:#e8e8e8;border-radius:5px;padding:14px 16px;font-family:monospace;font-size:12px;line-height:1.7;overflow-x:auto;}
+.endpoint .lbl{color:#aaa;font-weight:600;margin-bottom:6px;display:block;font-family:-apple-system,sans-serif;}
+.endpoint .line{display:flex;gap:10px;}
+.endpoint .line .m{color:#f0a04b;font-weight:600;min-width:50px;}
+.endpoint .line .p{color:#e8e8e8;}
+.endpoint-note{font-size:11px;color:#888;margin-top:10px;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:#fff;border:1px solid #ddd;border-radius:5px;padding:24px 26px;max-width:440px;width:100%;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px solid #eee;margin-bottom:18px;}
+.modal-head h3{font-size:16px;font-weight:600;}
+.modal-head .close{font-size:22px;color:#999;cursor:pointer;line-height:1;background:none;border:none;}
+.modal-head .close:hover{color:#222;}
+.modal-actions{display:flex;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #eee;}
+.modal-actions .btn{flex:1;justify-content:center;}
+.foot-bar{margin-top:14px;padding-top:16px;border-top:1px solid #eee;display:flex;justify-content:space-between;font-size:11px;color:#999;}
+.disclaimer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;transition:opacity .4s;}
+.disclaimer-box{background:#fff;max-width:560px;width:100%;border-radius:8px;padding:26px 24px;border:1px solid #ddd;box-shadow:0 10px 40px rgba(0,0,0,.25);}
+@media (max-width:1024px){.stats{grid-template-columns:repeat(2,1fr);}.form-row{grid-template-columns:1fr;}}
+@media (max-width:768px){
+.sidebar{transform:translateX(-100%);}
+.sidebar.open{transform:translateX(0);}
+.menu-btn{display:flex;align-items:center;justify-content:center;}
+.main{margin-left:0;}
+.topbar{padding:0 16px;}
+.content{padding:16px 16px 30px;}
+.stats{grid-template-columns:1fr 1fr;gap:10px;}
+.stat{padding:12px 14px;}
+.stat .num{font-size:18px;}
+.card{padding:16px 16px;}
+.page-title h1{font-size:18px;}
+.foot-bar{flex-direction:column;gap:4px;text-align:center;}
+}
+@media (max-width:480px){
+.stats{grid-template-columns:1fr;}
+table thead th,table tbody td{padding:6px 8px;font-size:12px;}
+.topbar .secure{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="loginView" class="login-wrapper">
+    <div id="loginDisclaimer" class="disclaimer-overlay">
+        <div class="disclaimer-box">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eee;">
+                <span style="font-size:22px;">⚠️</span>
+                <strong style="font-size:15px;color:#c0392b;">DISCLAIMER</strong>
+            </div>
+            <p style="font-size:13px;color:#333;line-height:1.65;">
+                This website is strictly for <strong>educational, informational, and demonstration purposes only</strong>. The API is demonstrated using sample/dummy data. We do not support unauthorized access, privacy violations, stalking, harassment, fraud, or misuse of personal information. Do not use this API to target, identify, track, harass, or harm any individual. Users are responsible for complying with applicable laws, privacy regulations, API terms, and Google policies. No real person's private information is intentionally disclosed.
+            </p>
+            <div style="margin-top:16px;text-align:right;font-size:11px;color:#999;">
+                <i class="fas fa-clock"></i> Auto closing in <span id="loginDiscCount">2</span>s...
+            </div>
+        </div>
+    </div>
+    <div class="login-box">
+        <div class="logo">V</div>
+        <h1>Admin Login</h1>
+        <p class="sub">Sign in to manage the API system</p>
+        <div id="loginError" class="error-msg" style="display:none;">
+            <i class="fas fa-exclamation-circle"></i> <span id="loginErrorText">Invalid credentials</span>
+        </div>
+        <form id="loginForm" onsubmit="return handleLogin(event)">
+            <div class="form-group">
+                <label>Username</label>
+                <input name="login_user" id="loginUser" placeholder="Enter username" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input name="login_pass" id="loginPass" type="password" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="login-btn"><i class="fas fa-lock"></i> Sign In</button>
+        </form>
+        <div class="login-footer">Secure Administration</div>
+    </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="dashboardView" class="dashboard-wrapper">
+    <div id="dashDisclaimer" class="disclaimer-overlay">
+        <div class="disclaimer-box">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eee;">
+                <span style="font-size:22px;">⚠️</span>
+                <strong style="font-size:15px;color:#c0392b;">DISCLAIMER</strong>
+            </div>
+            <p style="font-size:13px;color:#333;line-height:1.65;">
+                This website is strictly for <strong>educational, informational, and demonstration purposes only</strong>. The API is demonstrated using sample/dummy data. We do not support unauthorized access, privacy violations, stalking, harassment, fraud, or misuse of personal information. Do not use this API to target, identify, track, harass, or harm any individual. Users are responsible for complying with applicable laws, privacy regulations, API terms, and Google policies. No real person's private information is intentionally disclosed.
+            </p>
+            <div style="margin-top:16px;text-align:right;font-size:11px;color:#999;">
+                <i class="fas fa-clock"></i> Auto closing in <span id="dashDiscCount">2</span>s...
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <div class="icon">V</div>
+            <div class="text">
+                <strong>Admin Panel</strong>
+                <small>Number Info API</small>
+            </div>
+        </div>
+        <nav>
+            <div class="nav-label">Main</div>
+            <a class="nav-link active" data-target="dashboard"><i class="fas fa-home"></i> Dashboard</a>
+            <a class="nav-link" data-target="create-section"><i class="fas fa-plus-circle"></i> Create Key</a>
+            <a class="nav-link" data-target="keys-section"><i class="fas fa-key"></i> API Keys</a>
+            <a class="nav-link" data-target="endpoint-section"><i class="fas fa-code"></i> Endpoint</a>
+            <div class="nav-label">System</div>
+            <a id="resetDailyBtn"><i class="fas fa-sync-alt"></i> Reset Daily</a>
+            <a id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+        </nav>
+        <div class="foot"><i class="fas fa-shield-alt"></i> Secure Session</div>
+    </aside>
+
+    <div class="main">
+        <header class="topbar">
+            <div class="crumb">Admin / <strong>Dashboard</strong></div>
+            <div class="right">
+                <span class="secure"><i class="fas fa-circle" style="font-size:8px;"></i> Secure</span>
+                <button class="logout" id="logoutBtnTop"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="page-title">
+                <h1>API Management</h1>
+                <p>Manage API keys, limits, expiry and access control for the Number Info service.</p>
+            </div>
+
+            <div id="alertBox" class="alert" style="display:none;"></div>
+
+            <div class="stats">
+                <div class="stat">
+                    <div class="ico"><i class="fas fa-key"></i></div>
+                    <div><div class="num" id="statTotalKeys">0</div><div class="lbl">Total Keys</div></div>
+                </div>
+                <div class="stat">
+                    <div class="ico"><i class="fas fa-calendar-day"></i></div>
+                    <div><div class="num" id="statToday">0</div><div class="lbl">Today</div></div>
+                </div>
+                <div class="stat">
+                    <div class="ico"><i class="fas fa-chart-bar"></i></div>
+                    <div><div class="num" id="statTotalRequests">0</div><div class="lbl">Total Requests</div></div>
+                </div>
+                <div class="stat">
+                    <div class="ico"><i class="fas fa-check-circle"></i></div>
+                    <div><div class="num" id="statActive">0</div><div class="lbl">Active</div></div>
+                </div>
+            </div>
+
+            <div class="card" id="create-section">
+                <div class="card-head">
+                    <div class="ico"><i class="fas fa-plus-circle"></i></div>
+                    <h3>Create New API Key</h3>
+                    <span class="sub">Generate a new access credential</span>
+                </div>
+                <form id="createKeyForm" onsubmit="return handleCreateKey(event)">
+                    <div class="form-group">
+                        <label>API Key Text <span class="req">*</span></label>
+                        <input type="text" id="newKeyText" placeholder="Enter a unique API key" required>
+                    </div>
+                    <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:6px;">Service Type</label>
+                    <div class="service-fixed"><i class="fas fa-phone"></i> NUMBER INFO (Fixed)</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Daily Limit</label>
+                            <input type="number" id="newDailyLimit" value="100" min="0">
+                            <small>0 = unlimited</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Expiry Date</label>
+                            <input type="date" id="newExpiryDate">
+                            <small>Leave blank for no expiry</small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-key"></i> Create Key</button>
+                </form>
+            </div>
+
+            <div class="card" id="keys-section">
+                <div class="card-head">
+                    <div class="ico"><i class="fas fa-list-alt"></i></div>
+                    <h3>API Key Registry</h3>
+                    <span class="sub">Manage all issued credentials</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>API Key</th><th>Limit</th><th>Today</th><th>Total</th><th>Created</th><th>Expiry</th><th>Status</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="keysTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" id="endpoint-section">
+                <div class="card-head">
+                    <div class="ico"><i class="fas fa-code"></i></div>
+                    <h3>API Endpoint</h3>
+                    <span class="sub">Number Info service</span>
+                </div>
+                <div class="endpoint">
+                    <span class="lbl">Base URL: <span id="baseUrlDisplay"></span></span>
+                    <div class="line">
+                        <span class="m">GET</span>
+                        <span class="p" id="endpointUrlDisplay"></span>
+                    </div>
+                </div>
+                <div class="endpoint-note"><i class="fas fa-info-circle"></i> Replace YOUR_KEY with a valid API key. Number must be 10 digits.</div>
+            </div>
+
+            <div class="foot-bar">
+                <span>&copy; 2026 Number Info API</span>
+                <span><i class="fas fa-shield-alt"></i> Secure Administration Panel</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3><i class="fas fa-edit" style="color:#555;margin-right:8px;"></i> Edit API Key</h3>
+                <button class="close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form id="editForm" onsubmit="return handleEditKey(event)">
+                <input type="hidden" id="editKeyId">
+                <div class="form-group">
+                    <label>Daily Limit</label>
+                    <input type="number" id="editDailyLimit" min="0">
+                    <small>0 = unlimited</small>
+                </div>
+                <div class="form-group">
+                    <label>Expiry Date</label>
+                    <input type="date" id="editExpiryDate">
+                    <small>Leave blank for no expiry</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ============ CONFIG ============ */
+const ADMIN_USER = 'anish';
+const ADMIN_PASS = 'anish123';
+const API_BASE = '/api/smsb';   // Vercel serverless endpoint (adjust if needed)
+const STORAGE_KEY = 'number_info_api_data';
+
+/* ============ STATE ============ */
+let state = { loggedIn:false, keys:[], usageLogs:[] };
+
+/* ============ STORAGE ============ */
+function loadState(){
+    try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(raw){
+            const p = JSON.parse(raw);
+            state.keys = p.keys || [];
+            state.usageLogs = p.usageLogs || [];
+        } else {
+            state.keys = [{
+                id:1, key_text:'demo_key_123', service_type:'number',
+                daily_limit:100, used_today:0, total_used:0,
+                last_used:'', expiry_date:'',
+                created_at:new Date().toISOString().slice(0,19).replace('T',' '),
+                active:1
+            }];
+            state.usageLogs = [];
+            saveState();
+        }
+    }catch(e){ state.keys=[]; state.usageLogs=[]; }
+}
+function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ keys:state.keys, usageLogs:state.usageLogs }));
+}
+
+/* ============ HELPERS ============ */
+function generateId(){ return state.keys.length ? Math.max(...state.keys.map(k=>k.id))+1 : 1; }
+function formatDate(s){ if(!s) return 'Never'; const d=new Date(s); return isNaN(d)?'Invalid':d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function isExpired(e){ return e ? new Date(e) < new Date() : false; }
+function getTodayKey(){ return new Date().toISOString().slice(0,10); }
+function countTodayUsage(id){ const t=getTodayKey(); return state.usageLogs.filter(l=>l.api_key_id===id && l.used_at && l.used_at.startsWith(t)).length; }
+function countTotalUsage(id){ return state.usageLogs.filter(l=>l.api_key_id===id).length; }
+function escapeHtml(s){ return String(s||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+
+/* ============ LOGIN ============ */
+function handleLogin(e){
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    if(u === ADMIN_USER && p === ADMIN_PASS){
+        state.loggedIn = true;
+        sessionStorage.setItem('admin_logged','true');
+        document.getElementById('loginError').style.display='none';
+        showDashboard();
+    } else {
+        document.getElementById('loginErrorText').textContent = 'Invalid credentials';
+        document.getElementById('loginError').style.display='flex';
+    }
+    return false;
+}
+function handleLogout(){
+    state.loggedIn = false;
+    sessionStorage.removeItem('admin_logged');
+    document.getElementById('dashboardView').classList.remove('active');
+    document.getElementById('loginView').style.display='flex';
+    document.getElementById('loginUser').value='';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginError').style.display='none';
+    showLoginDisclaimer();
+}
+function checkLogin(){
+    if(sessionStorage.getItem('admin_logged')==='true'){
+        state.loggedIn = true;
+        showDashboard();
+    } else {
+        document.getElementById('loginView').style.display='flex';
+        document.getElementById('dashboardView').classList.remove('active');
+        showLoginDisclaimer();
+    }
+}
+
+/* ============ DISCLAIMER ============ */
+function showLoginDisclaimer(){
+    const el = document.getElementById('loginDisclaimer'); if(!el) return;
+    el.style.display='flex'; el.style.opacity='1';
+    let c=2; const ce=document.getElementById('loginDiscCount'); if(ce) ce.textContent=c;
+    const t=setInterval(()=>{c--; if(ce) ce.textContent=c; if(c<=0) clearInterval(t);},1000);
+    setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none',400); },2000);
+}
+function showDashDisclaimer(){
+    const el = document.getElementById('dashDisclaimer'); if(!el) return;
+    el.style.display='flex'; el.style.opacity='1';
+    let c=2; const ce=document.getElementById('dashDiscCount'); if(ce) ce.textContent=c;
+    const t=setInterval(()=>{c--; if(ce) ce.textContent=c; if(c<=0) clearInterval(t);},1000);
+    setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none',400); },2000);
+}
+
+/* ============ DASHBOARD ============ */
+function showDashboard(){
+    document.getElementById('loginView').style.display='none';
+    document.getElementById('dashboardView').classList.add('active');
+    showDashDisclaimer();
+    renderAll();
+    updateEndpoint();
+}
+function renderAll(){ renderStats(); renderKeysTable(); }
+function renderStats(){
+    document.getElementById('statTotalKeys').textContent = state.keys.length;
+    document.getElementById('statToday').textContent = state.usageLogs.filter(l=>l.used_at && l.used_at.startsWith(getTodayKey())).length;
+    document.getElementById('statTotalRequests').textContent = state.usageLogs.length;
+    document.getElementById('statActive').textContent = state.keys.filter(k=>k.active).length;
+}
+function renderKeysTable(){
+    const tb = document.getElementById('keysTableBody'); if(!tb) return;
+    tb.innerHTML='';
+    if(!state.keys.length){
+        tb.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:26px;color:#999;">No API keys yet. Create one above.</td></tr>`;
+        return;
+    }
+    state.keys.forEach(k=>{
+        const uT = countTodayUsage(k.id), tU = countTotalUsage(k.id);
+        const exp = isExpired(k.expiry_date), hasE = !!k.expiry_date;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><span style="font-weight:600;color:#999;">#${k.id}</span></td>
+            <td><span class="key">${escapeHtml(k.key_text)}</span></td>
+            <td>${k.daily_limit==0?'∞':k.daily_limit}</td>
+            <td><span class="badge ${uT>0?'badge-ok':'badge-neutral'}">${uT}</span></td>
+            <td>${tU}</td>
+            <td><span class="badge badge-neutral">${formatDate(k.created_at)}</span></td>
+            <td>${exp?'<span class="badge badge-bad">Expired</span>':(hasE?`<span class="badge badge-info">${formatDate(k.expiry_date)}</span>`:'<span class="badge badge-neutral">Never</span>')}</td>
+            <td>${k.active?'<span class="badge badge-ok"><i class="fas fa-check"></i> Active</span>':'<span class="badge badge-bad"><i class="fas fa-ban"></i> Revoked</span>'}</td>
+            <td>
+                <div class="action-group">
+                    <button class="abtn abtn-edit" onclick="openEditModal(${k.id},${k.daily_limit},'${k.expiry_date||''}')"><i class="fas fa-edit"></i> Edit</button>
+                    <button class="abtn abtn-toggle" onclick="toggleKey(${k.id})"><i class="fas ${k.active?'fa-ban':'fa-check'}"></i> ${k.active?'Revoke':'Activate'}</button>
+                    <button class="abtn abtn-del" onclick="deleteKey(${k.id})"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </td>`;
+        tb.appendChild(tr);
+    });
+}
+
+/* ============ CRUD ============ */
+function handleCreateKey(e){
+    e.preventDefault();
+    const kt = document.getElementById('newKeyText').value.trim();
+    const dl = parseInt(document.getElementById('newDailyLimit').value)||0;
+    const ed = document.getElementById('newExpiryDate').value;
+    if(!kt){ showAlert('Key text required','error'); return false; }
+    if(state.keys.some(k=>k.key_text===kt)){ showAlert('Key already exists','error'); return false; }
+    state.keys.push({
+        id: generateId(), key_text: kt, service_type:'number',
+        daily_limit: dl, used_today:0, total_used:0,
+        last_used:'', expiry_date: ed,
+        created_at: new Date().toISOString().slice(0,19).replace('T',' '),
+        active: 1
+    });
+    saveState(); renderAll();
+    document.getElementById('createKeyForm').reset();
+    document.getElementById('newDailyLimit').value = 100;
+    showAlert('API Key created successfully!','success');
+    return false;
+}
+function openEditModal(id, limit, expiry){
+    document.getElementById('editKeyId').value = id;
+    document.getElementById('editDailyLimit').value = limit;
+    document.getElementById('editExpiryDate').value = expiry||'';
+    document.getElementById('editModal').style.display='flex';
+    document.body.style.overflow='hidden';
+}
+function closeEditModal(){
+    document.getElementById('editModal').style.display='none';
+    document.body.style.overflow='';
+}
+function handleEditKey(e){
+    e.preventDefault();
+    const id = parseInt(document.getElementById('editKeyId').value);
+    const nl = parseInt(document.getElementById('editDailyLimit').value)||0;
+    const ne = document.getElementById('editExpiryDate').value;
+    const k = state.keys.find(x=>x.id===id);
+    if(k){ k.daily_limit=nl; k.expiry_date=ne; saveState(); renderAll(); closeEditModal(); showAlert('API Key updated successfully!','success'); }
+    return false;
+}
+function toggleKey(id){
+    const k = state.keys.find(x=>x.id===id);
+    if(k){ k.active = k.active?0:1; saveState(); renderAll(); showAlert('Key status updated!','success'); }
+}
+function deleteKey(id){
+    if(!confirm('Delete this API key permanently?')) return;
+    state.keys = state.keys.filter(k=>k.id!==id);
+    state.usageLogs = state.usageLogs.filter(l=>l.api_key_id!==id);
+    saveState(); renderAll();
+    showAlert('Key deleted successfully!','success');
+}
+function resetDailyUsage(){ showAlert('Daily usage reset successfully!','success'); }
+function showAlert(msg,type){
+    const b = document.getElementById('alertBox'); if(!b) return;
+    b.className = 'alert '+(type||'success');
+    b.innerHTML = `<i class="fas ${type==='error'?'fa-exclamation-circle':'fa-check-circle'}"></i> ${msg}`;
+    b.style.display='flex';
+    clearTimeout(b._t);
+    b._t = setTimeout(()=>{ b.style.display='none'; },4000);
+}
+
+/* ============ ENDPOINT ============ */
+function updateEndpoint(){
+    const base = window.location.origin;
+    document.getElementById('baseUrlDisplay').textContent = base;
+    document.getElementById('endpointUrlDisplay').textContent = `${base}${API_BASE}?key=YOUR_KEY&num=9876543210`;
+}
+
+/* ============ INIT ============ */
+document.addEventListener('DOMContentLoaded',()=>{
+    loadState();
+    checkLogin();
+
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+    document.getElementById('logoutBtnTop')?.addEventListener('click', handleLogout);
+    document.getElementById('resetDailyBtn')?.addEventListener('click', e=>{ e.preventDefault(); resetDailyUsage(); });
+
+    document.getElementById('menuBtn')?.addEventListener('click', ()=>{
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('overlay').classList.toggle('active');
+    });
+    document.getElementById('overlay')?.addEventListener('click', ()=>{
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('overlay').classList.remove('active');
+    });
+
+    document.querySelectorAll('.nav-link').forEach(l=>{
+        l.addEventListener('click', function(e){
+            const t = this.dataset.target;
+            if(t && t!=='dashboard'){
+                const el = document.getElementById(t);
+                if(el){ e.preventDefault(); el.scrollIntoView({behavior:'smooth',block:'start'});
+                    document.getElementById('sidebar').classList.remove('open');
+                    document.getElementById('overlay').classList.remove('active'); }
+            } else { e.preventDefault(); window.scrollTo({top:0,behavior:'smooth'}); }
+        });
+    });
+
+    window.addEventListener('click', e=>{
+        const m = document.getElementById('editModal');
+        if(e.target===m) closeEditModal();
+    });
+});
+
+/* ============ API MOCK (client-side test) ============ */
+window.callApiMock = function(key, num){
+    const k = state.keys.find(x=>x.key_text===key && x.active);
+    if(!k) return { error:'Invalid API key', BUY_API:'@Vectraen', SUPPORT:'@Vectraen' };
+    if(k.expiry_date && new Date(k.expiry_date)<new Date()) return { error:'API Key expired on '+formatDate(k.expiry_date), BUY_API:'@Vectraen', SUPPORT:'@Vectraen' };
+    if(k.daily_limit>0 && countTodayUsage(k.id)>=k.daily_limit) return { error:'Daily limit of '+k.daily_limit+' reached', BUY_API:'@Vectraen', SUPPORT:'@Vectraen' };
+    const phone = String(num).replace(/[^0-9]/g,'');
+    if(phone.length!==10) return { error:'Invalid phone number! Need 10 digits.', BUY_API:'@Vectraen', SUPPORT:'@Vectraen' };
+    state.usageLogs.push({ id:state.usageLogs.length+1, api_key_id:k.id, query:phone, used_at:new Date().toISOString().slice(0,19).replace('T',' ') });
+    saveState(); renderAll();
+    return {
+        username: k.key_text, type:'number',
+        data:{ number:phone, name:'Demo User', operator:'Airtel', circle:'Delhi NCR', country:'India', status:'active', address:'123 Demo Street, New Delhi', email:'demo@example.com', alt_phone:'9876543211' },
+        BUY_API:'@Vectraen', SUPPORT:'@Vectraen'
+    };
+};
+</script>
+</body>
+</html>
